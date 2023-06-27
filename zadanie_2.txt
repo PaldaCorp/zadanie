@@ -1,0 +1,13 @@
+
+Výsledok je možné dosiahnuť napr. pomocou týchto troch sql queries, pričom najrýchlejšia bude možnosť 3.), obvzlášť ak sa použije na stĺpec
+value index: alter table duplicates add index (value);
+
+1.) select distinct d1.id, d1.value from duplicates d1 inner join duplicates d2 on d1.value = d2.value where d1.id != d2.id order by d1.id asc;
+
+2.) select d1.id, d1.value from duplicates d1 inner join (select id, value from duplicates group by value having count(value) > 1) d2 on d1.value = d2.value;
+
+3.) select id, value from duplicates where value in (select value from duplicates group by value having count(value) > 1);
+
+Či to bude efektívne na obrovskej tabuľke závisí aj od hardwaru na ktorom beží mysql server, potom závisí aj od toho ako optimalizuje mysql server určité príkazy teda
+aká verzia mysql je na servery nainštalovaná, ďalej to môže závisieť od použitého storage enginu, napr. tabuľka duplicates používa úložisko InnoDB,
+v minulosti bolo na selectovanie rýchlejšie úložisko MyISAM avšak dnes už dominuje InnoDB.
