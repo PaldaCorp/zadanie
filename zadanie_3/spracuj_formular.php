@@ -40,7 +40,7 @@ else {
         <div class="container py-5">
             <div class="row mb-5">
                 <div class="col-md-9 me-md-auto">
-                    <h1 class="fw-bolder ps-5"><?php echo $udaje['Názov firmy'][0]; ?></h1>
+                    <h1 class="fw-bolder ps-5"><?php echo htmlspecialchars($udaje['Názov firmy'][0]); ?></h1>
                 </div>
                 <div class="col-auto ms-auto mt-3 mt-md-0 ms-md-0 me-md-5">
                     <a href="index.php" class="col-auto btn btn-primary">Späť</a>
@@ -49,11 +49,11 @@ else {
             <div class="row bg-light gy-3" style="border-radius:12px;">
                 <?php foreach ($udaje as $nazov => $udaj): ?>
                     <div class="col-md-4 border-bottom" >
-                        <h5 class="ps-5 py-2"><?php echo $nazov; ?></h5>
+                        <h5 class="ps-5 py-2"><?php echo htmlspecialchars($nazov); ?></h5>
                     </div>
                     <div class="col-md-8 border-bottom">
                         <?php foreach ($udaj as $hodnota): ?>
-                            <p class="lead py-2 ps-5 ps-md-0"><?php echo $hodnota; ?></p>
+                            <p class="lead py-2 ps-5 ps-md-0"><?php echo htmlspecialchars($hodnota); ?></p>
                         <?php endforeach; ?>
                     </div>
                 <?php endforeach; ?>
