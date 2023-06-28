@@ -2,6 +2,7 @@
 
 /*
  * Trieda na spracovanie beznych chyb
+ * 
 */
 class SpracujXmlException extends Exception {
 
@@ -12,6 +13,7 @@ class SpracujXmlException extends Exception {
 
 /*
  * Trieda na spracovanie chyb pri praci so subormi
+ * 
 */
 class FileException extends Exception {
 
@@ -22,9 +24,12 @@ class FileException extends Exception {
 
 /*
  * Trieda na spracovanie xml suboru
+ * Staci spravit male upravy a trieda bude pripravena aj na ine typy endpointov
+ * 
 */
 class  SpracujXml {
 
+    public $endpoint; // Url z ktorej sa budu nacitat udaje vo forme xml suboru
     public $ico; // ICO firmy, zadava sa cez konstruktor
     public $skratky; // Subor skratky.txt stiahnuty z url: https://wwwinfo.mfcr.cz/ares/xml_doc/schemas/documentation/zkr_103.txt
     public $xml_subor; // Subor stiahnuty z url: https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_bas.cgi?ico=<ICO>, ktory sa este bude upravovat
@@ -38,18 +43,19 @@ class  SpracujXml {
      *  na zaklade obsahu suboru upravene_skratky.txt upravuje samotne xml elementy na
      *  citatelnejsiu formu, teda nahradza skratky v nazvoch elementov ich popisnejsimi alternativami
      *  a vysledok uklada do premennej $xml_subor.
+     * 
     */
 
     public function __construct($ico) {
         $this->ico = str_replace(' ', '', (string) $ico); // Samotne ICO zadane uzivatelom, odstranenie pripadnych medzier
         $this->overIco(); // Funkcia na kontrolu formatu pre ICO
+        $this->endpoint = 'https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_bas.cgi?ico='; // Samotna Url na ktoru sa pripoji ICO
         // nacitanie xml suboru z url
-        $this->xml_subor = @file_get_contents('https://wwwinfo.mfcr.cz/cgi-bin/ares/darv_bas.cgi?ico=' . $this->ico);
-
+        $this->xml_subor = @file_get_contents($this->endpoint . $this->ico);
+        
         if ($this->xml_subor === false) {
             throw new FileException('Nepodarilo sa načítať súbor.');
         }
-        
         // Kontrola existencie suboru upravene_skratky.txt, ak existuje nevytvara ho znovu
         if (!file_exists('upravene_skratky.txt')) {
             // Zo suboru skratky.txt sa odstranuju uvodzovky a meni sa poradie hodnot oddelenych lomitkom
@@ -63,6 +69,7 @@ class  SpracujXml {
         // a vytvory tak popisnejsie nazvy elementov
         $this->spracujXmlSubor();
         //$this->zobraz($this->xml_subor); exit(); // Kontrola spravnosti upravenych nazvov xml elementov
+    
     }
 
     /*
@@ -78,6 +85,7 @@ class  SpracujXml {
             throw new SpracujXmlException('Chybný formát pre IČO.'); 
             return false;
         }
+        return true;
     }
 
     /*
@@ -85,6 +93,7 @@ class  SpracujXml {
      * 
      * Funkcia sluzi iba ako pomocna pri vyvoji,
      * vypisuje na obrazovku prehladne obsah premennej $obj
+     * 
     */
     public function zobraz($obj) {
         echo '<pre>';
@@ -128,6 +137,7 @@ class  SpracujXml {
         $skratky = @file($nazov_suboru, FILE_IGNORE_NEW_LINES);
         if ($skratky === false) {
             throw new FileException('Chyba pri spracovaní súboru skratky.txt');
+            return false;
         }
         foreach ($skratky as $riadok) {
             $riadok = str_replace('"', '', $riadok);
@@ -142,6 +152,7 @@ class  SpracujXml {
         $value = @file_put_contents('upravene_skratky.txt', $obsah);
         if ($value === false) {
             throw new FileException('Súbor upravene_skratky.txt sa nepodarilo vytvoriť');
+            return false;
         }
 
         return true;
@@ -160,6 +171,7 @@ class  SpracujXml {
         $skratky = @file($nazov_suboru, FILE_IGNORE_NEW_LINES);
         if ($skratky === false) {
             throw new FileException('Chyba pri spracovaní súboru upravene_skratky.txt');
+            return false;
         }
         foreach ($skratky as $riadok) {
             $pole = explode('/', $riadok);
@@ -230,8 +242,8 @@ class  SpracujXml {
                                                   // do funkcie nacitajUdaj()
                 }
                 // Funkcia nacitajUdaj() vrati $subor ako pole a $subor predstavuje obsah prveho elementu
-                // teda ak $polozky_nazov su napr. ['Prvy->druhy' => 'Nazov'], tak to bude obsah xml elementu s nazvom Prvy, <Prvy></Prvy>,
-                // pri druhej iteracii cyklu bude v premennej $subor uz iba obsah elemntu <Druhy></Druhy> a pod.
+                // teda ak $polozky_nazov su napr. ['Prvy->druhy' => 'Nazov'], tak to bude obsah xml elementu s nazvom Prvy, <Prvy><Druhy>...Obsah...</Druhy></Prvy>,
+                // pri druhej iteracii cyklu bude v premennej $subor uz iba obsah elemntu <Druhy>...Obsah...</Druhy> a pod.
                 $subor = $this->nacitajUdaj($nazov, $subor);
             }
     
@@ -249,7 +261,7 @@ class  SpracujXml {
         // Tu sa iba spajaju dve polozky nacitane do pola $vysledok, aby sa dosiahol citatelnejsi format vypisu
         if (!empty($vysledok['Obory činností kód'])) {
             for ($i = 0; $i < count($vysledok['Obory činností kód']); $i++) {
-                $vysledok['Obory činností'][] = $vysledok['Obory činností kód'][$i] . ' - ' . $vysledok['Obory činností názov'][$i];
+                $vysledok['Obory činností (kód-názov)'][] = $vysledok['Obory činností kód'][$i] . ' - ' . $vysledok['Obory činností názov'][$i];
             }
         }
     
@@ -299,7 +311,7 @@ class  SpracujXml {
  * 
 */
 $nastavenia = [
-    'Error_text' => 'Zadané IČO nebolo nájdené.',
+    'Error_text' => 'Zadané IČO nebolo nájdené.', // Tato hodnota pola sa zobrazi iba ak stranka na endpointe nedokazala najst udaje pre zadaane ICO
     'Obchodni_firma' => 'Názov firmy',
     'ICO' => 'IČO',
     'Pravni_forma->Kod_PF' => 'Kód právnej formy',

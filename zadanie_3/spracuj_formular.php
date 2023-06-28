@@ -1,31 +1,33 @@
 <?php
 
-require_once('SpracujXml.php');
+require_once('SpracujXml.php'); // Vklada sa trieda na spracovanie xml suboru
 
-if (!empty($_POST['ico'])) {
-    try {
-        $xml = new SpracujXml($_POST['ico']);
+if (!empty($_POST['ico'])) { // Kontrola ci bolo zadane ICO
+    try { 
+        $xml = new SpracujXml($_POST['ico']); // Vytvara sa objekt a vykona sa konstruktor
     
-        $udaje = $xml->nacitajUdaje($nastavenia);
-        if (!empty($udaje['Zadané IČO nebolo nájdené.'][0])) {
-            header('Location: index.php?oznamenie=' . urlencode('Zadané IČO neexistuje !')); exit();
+        $udaje = $xml->nacitajUdaje($nastavenia); // V poli $udaje su vsetky udaje vytiahnute z xml suboru a to podla pola $nastavenia
+                                                  // definovaneho v SpracujXml.php
+        if (!empty($udaje['Zadané IČO nebolo nájdené.'][0])) { // Ak bola nacitana tato hodnota, znamena to, ze sa nenasli ziadne udaje pre dane ICO
+            header('Location: index.php?oznamenie=' . urlencode('Zadané IČO neexistuje !')); exit(); // Opat presmerovanie s oznamenim
         }
-        else if (empty($udaje['Názov firmy'])) {
-            header('Location: index.php?oznamenie=' . urlencode('Nepodarilo sa načítať údaje.')); exit();
+        else if (empty($udaje['Názov firmy'])) { // Ak sa nenacital ani nazov firmy
+            header('Location: index.php?oznamenie=' . urlencode('Nepodarilo sa načítať údaje.')); exit(); // Opat presmerovanie s oznamenim
         }
     }
     catch (SpracujXmlException $e) {
-        header('Location: index.php?oznamenie=' . urlencode($e->getMessage())); exit();
+        header('Location: index.php?oznamenie=' . urlencode($e->getMessage())); exit(); // Ak sa vyskytla bezna chyba, presmerovanie na index.php s oznamenim
     }
     catch (FileException $e) {
-        header('Location: index.php?oznamenie=' . urlencode($e->getMessage())); exit();
+        header('Location: index.php?oznamenie=' . urlencode($e->getMessage())); exit(); // Ak sa vyskytla suborova chyba, presmerovanie na index.php s oznamenim
     }
 }
 else {
-    header('Location: index.php'); exit();
+    header('Location: index.php'); exit(); // Ak nebolo zadane ICO, presmerovanie spat na index.php 
 }
 
 ?>
+<!-- Jednoducha sablona kde sa iba vypisuju udaje z pola $udaje, ktore sa naplni podla premennej $nastavenia zo suboru SpracujXml.php -->
 <!DOCTYPE html>
 <html>
     <head>
